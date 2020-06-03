@@ -1,0 +1,52 @@
+version: "1.0"
+module:
+  meta:
+    type: remote
+  spec:
+    functions:
+      - function:
+          meta:
+            kind: http
+            type: lieferbot/monitoring
+          spec:
+            endpoint: http://python-worker:8000/statefun
+            states:
+              - order_state
+              - time_unassigned
+              - time_assigned
+              - time_in_progress
+              - time_delivered
+            maxNumBatchRequests: 500
+            timeout: 2min
+    ingresses:
+      - ingress:
+          meta:
+            type: statefun.kafka.io/routable-protobuf-ingress
+            id: lieferbot/orders
+          spec:
+            address: kafka-broker:9092
+            consumerGroupId: my-group-id
+            topics:
+              - topic: names
+                typeUrl: com.googleapis/lieferbot.OrderUpdate
+                targets:
+                  - lieferbot/monitoring
+    egresses:
+      - egress:
+          meta:
+            type: statefun.kafka.io/generic-egress
+            id: lieferbot/status
+          spec:
+            address: kafka-broker:9092
+            deliverySemantic:
+              type: exactly-once
+              transactionTimeoutMillis: 100000
+      # - egress:
+      #   meta:
+      #     type: statefun.kafka.io/generic-egress
+      #     id: example/reps
+      #   spec:
+      #     address: kafka-broker:9092
+      #     deliverySemantic:
+      #       type: exactly-once
+      #       transactionTimeoutMillis: 100000

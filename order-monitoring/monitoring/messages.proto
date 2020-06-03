@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+// protoc *.proto --python_out=.
+
+package lieferbot;
+
+// External request sent per order update
+message OrderUpdate {
+    // The OrderID
+    string id = 1;
+}
+
+// A customized status update
+message OrderStatus {
+    // The id of the order
+    string id = 1;
+    // The orders status update
+    string status = 2;
+}
+
+// An internal message used to store state of the OrderID
+message OrderState {
+    // The current state of the order
+    int64 state = 1;
+}
+// An internal message used to store timestamps
+message Time {
+    float time = 1;
+}
+
+// A monitoring report of an Order
+message Report {
+    string id = 1;
+    int64 vehicle = 2;
+    float timeUnassigned = 3;
+    float timeAssigned = 4;
+    float timeInProgress = 5;
+    float timeDelivered = 6;
+}
