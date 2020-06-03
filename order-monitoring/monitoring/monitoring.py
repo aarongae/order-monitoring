@@ -1,7 +1,7 @@
 from flask import request
 from flask import make_response
 from flask import Flask
-from messages_pb2 import OrderState, OrderUpdate, OrderStatus, Time, Report
+from messages_pb2 import OrderState, OrderUpdate, OrderStatus, Report, Time
 
 from statefun import StatefulFunctions
 from statefun import RequestReplyHandler
@@ -10,21 +10,19 @@ from statefun import kafka_egress_record
 from datetime import datetime
 import time
 
-
 functions = StatefulFunctions()
-
 
 @functions.bind("lieferbot/monitoring")
 def monitore(context, order_update: OrderUpdate):
     state = context.state('order_state').unpack(OrderState)
     if not state:
         state = OrderState()
-        state.state = 0
+        state.status = 0
     else:
-        state.state += 1
+        state.status += 1        
     context.state('order_state').pack(state)
 
-    response = compute_status(order_update.id, state.state)
+    response = compute_status(order_update, state.status)
     compute_time(context, order_update)
 
     egress_message = kafka_egress_record(
@@ -36,7 +34,7 @@ def compute_time(context, order_update: OrderUpdate):
 
     state = context.state('order_state').unpack(OrderState)
 
-    if state.state == 0:
+    if state.status == 0:
         timeunassigned = context.state('time_unassigned').unpack(Time)
         if not timeunassigned:
             t = time.time()
@@ -44,14 +42,14 @@ def compute_time(context, order_update: OrderUpdate):
             timeunassigned.time = t
         context.state('time_unassigned').pack(timeunassigned)
 
-    elif state.state == 1:
+    elif state.status == 1:
         timeassigned = context.state('time_assigned').unpack(Time)
         t = time.time()
         timeassigned = Time()
         timeassigned.time = t
         context.state('time_assigned').pack(timeassigned)
 
-    elif state.state == 2:
+    elif state.status == 2:
         timeprogress = context.state('time_in_progress').unpack(Time)
         if not timeprogress:
             t = time.time()
@@ -59,7 +57,7 @@ def compute_time(context, order_update: OrderUpdate):
             timeprogress.time = t
         context.state('time_in_progress').pack(timeprogress)
 
-    elif state.state == 3:
+    elif state.status == 3:
         timedelivered = context.state('time_delivered').unpack(Time)
         if not timedelivered:
             t = time.time()
@@ -70,7 +68,7 @@ def compute_time(context, order_update: OrderUpdate):
 
         response = Report()
         response.id = order_update.id
-        response.vehicle = -1
+        response.vehicle = order_update.vehicle
 
         timeunassigned = context.state('time_unassigned').unpack(Time)
         response.timeUnassigned = timeunassigned.time
@@ -95,30 +93,30 @@ def compute_time(context, order_update: OrderUpdate):
     context.state('order_state').pack(state)
 
 
-def compute_status(id, state):
+def compute_status(order_update:OrderUpdate, state):
     """
     Compute order status based on @state
     """
     now = datetime.now()
 
     if state == 0:
-        status = "Order:%s Status:UNASSIGNED Time:%s" % (
-            id, now.strftime("%d.%m.%Y - %H:%M:%S"))
+        status = "Order:%s Status:UNASSIGNED Time:%s VehicleId:%s" % (
+            order_update.id, now.strftime("%d.%m.%Y - %H:%M:%S"), order_update.vehicle)
     elif state == 1:
-        status = "Order:%s Status:ASSIGNED Time:%s" % (
-            id, now.strftime("%d.%m.%Y - %H:%M:%S"))
+        status = "Order:%s Status:ASSIGNED Time:%s VehicleId:%s" % (
+            order_update.id, now.strftime("%d.%m.%Y - %H:%M:%S"), order_update.vehicle)
     elif state == 2:
-        status = "Order:%s Status:IN_PROGRESS Time:%s" % (
-            id, now.strftime("%d.%m.%Y - %H:%M:%S"))
+        status = "Order:%s Status:IN_PROGRESS Time:%s VehicleId:%s" % (
+            order_update.id, now.strftime("%d.%m.%Y - %H:%M:%S"), order_update.vehicle)
     elif state == 3:
-        status = "Order:%s Status:DELIVERED Time:%s" % (
-            id, now.strftime("%d.%m.%Y - %H:%M:%S"))
+        status = "Order:%s Status:DELIVERED Time:%s VehicleId:%s" % (
+            order_update.id, now.strftime("%d.%m.%Y - %H:%M:%S"), order_update.vehicle)
     else:
-        status = "Order:%s Status:UNKNOWN Time:%s" % (
-            id, now.strftime("%d.%m.%Y - %H:%M:%S"))
+        status = "Order:%s Status:UNKNOWN Time:%s VehicleId:%s" % (
+            order_update.id, now.strftime("%d.%m.%Y - %H:%M:%S"), order_update.vehicle)
 
     response = OrderStatus()
-    response.id = id
+    response.id = order_update.id
     response.status = status
 
     return response

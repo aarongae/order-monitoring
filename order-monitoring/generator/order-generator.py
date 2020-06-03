@@ -14,6 +14,7 @@ from kafka import KafkaConsumer
 
 KAFKA_BROKER = "kafka-broker:9092"
 ORDER_ID = ["105047", "124686", "136861", "139901", "153463", "155573"]
+VEHICLE_ID = ["-1", "1", "2", "3", "4", "5"]
 
 
 def random_requests():
@@ -21,14 +22,12 @@ def random_requests():
     while True:
         request = OrderUpdate()
         request.id = random.choice(ORDER_ID)
+        #request.vehicle = random.choice(VEHICLE_ID)
         yield request
 
 
 def produce():
-    if len(sys.argv) == 2:
-        delay_seconds = int(sys.argv[1])
-    else:
-        delay_seconds = 1
+    delay_seconds = 1
     producer = KafkaProducer(bootstrap_servers=[KAFKA_BROKER])
     for request in random_requests():
         key = request.id.encode('utf-8')

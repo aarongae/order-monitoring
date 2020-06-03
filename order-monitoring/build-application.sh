@@ -5,6 +5,8 @@ rm -f apache_flink_statefun-*-py3-none-any.whl
 rm -rf __pycache__
 
 # remove old docker images
+docker rm $(docker ps -aq)
+
 docker rmi order-monitoring_order-generator
 docker rmi order-monitoring_python-worker
 docker rmi order-monitoring_master

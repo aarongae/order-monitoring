@@ -6,11 +6,13 @@ package lieferbot;
 
 // External request sent per order update
 message OrderUpdate {
-    // The OrderID
+    // The id of the order
     string id = 1;
+    // The vehicle id of the order
+    int64 vehicle = 2;
 }
 
-// A customized status update
+// A customized status update of an order
 message OrderStatus {
     // The id of the order
     string id = 1;
@@ -21,14 +23,22 @@ message OrderStatus {
 // An internal message used to store state of the OrderID
 message OrderState {
     // The current state of the order
-    int64 state = 1;
+    StatusType status = 1;
+    // The possible states
+    enum StatusType{
+        UNASSIGNED = 0;
+        ASSIGNED = 1;
+        INPROGRESS = 2;
+        DELIVERED =3;
+    }
 }
+
 // An internal message used to store timestamps
 message Time {
     float time = 1;
 }
 
-// A monitoring report of an Order
+// A customized monitoring report of an order
 message Report {
     string id = 1;
     int64 vehicle = 2;
