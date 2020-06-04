@@ -27,7 +27,7 @@ module:
             address: kafka-broker:9092
             consumerGroupId: my-group-id
             topics:
-              - topic: names
+              - topic: orders
                 typeUrl: com.googleapis/lieferbot.OrderUpdate
                 targets:
                   - lieferbot/monitoring

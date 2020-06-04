@@ -20,7 +20,7 @@ message OrderStatus {
     string status = 2;
 }
 
-// An internal message used to store state of the OrderID
+// An internal message used to store state of the order
 message OrderState {
     // The current state of the order
     StatusType status = 1;
@@ -46,4 +46,5 @@ message Report {
     float timeAssigned = 4;
     float timeInProgress = 5;
     float timeDelivered = 6;
+    string test = 7;
 }

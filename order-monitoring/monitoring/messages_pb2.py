@@ -18,7 +18,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='lieferbot',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=b'\n\x0emessages.proto\x12\tlieferbot\"*\n\x0bOrderUpdate\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0f\n\x07vehicle\x18\x02 \x01(\x03\")\n\x0bOrderStatus\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0e\n\x06status\x18\x02 \x01(\t\"\x89\x01\n\nOrderState\x12\x30\n\x06status\x18\x02 \x01(\x0e\x32 .lieferbot.OrderState.StatusType\"I\n\nStatusType\x12\x0e\n\nUNASSIGNED\x10\x00\x12\x0c\n\x08\x41SSIGNED\x10\x01\x12\x0e\n\nINPROGRESS\x10\x02\x12\r\n\tDELIVERED\x10\x03\"\x14\n\x04Time\x12\x0c\n\x04time\x18\x01 \x01(\x02\"\x82\x01\n\x06Report\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0f\n\x07vehicle\x18\x02 \x01(\x03\x12\x16\n\x0etimeUnassigned\x18\x03 \x01(\x02\x12\x14\n\x0ctimeAssigned\x18\x04 \x01(\x02\x12\x16\n\x0etimeInProgress\x18\x05 \x01(\x02\x12\x15\n\rtimeDelivered\x18\x06 \x01(\x02\x62\x06proto3'
+  serialized_pb=b'\n\x0emessages.proto\x12\tlieferbot\"*\n\x0bOrderUpdate\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0f\n\x07vehicle\x18\x02 \x01(\x03\")\n\x0bOrderStatus\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0e\n\x06status\x18\x02 \x01(\t\"\x89\x01\n\nOrderState\x12\x30\n\x06status\x18\x01 \x01(\x0e\x32 .lieferbot.OrderState.StatusType\"I\n\nStatusType\x12\x0e\n\nUNASSIGNED\x10\x00\x12\x0c\n\x08\x41SSIGNED\x10\x01\x12\x0e\n\nINPROGRESS\x10\x02\x12\r\n\tDELIVERED\x10\x03\"\x14\n\x04Time\x12\x0c\n\x04time\x18\x01 \x01(\x02\"\x90\x01\n\x06Report\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0f\n\x07vehicle\x18\x02 \x01(\x03\x12\x16\n\x0etimeUnassigned\x18\x03 \x01(\x02\x12\x14\n\x0ctimeAssigned\x18\x04 \x01(\x02\x12\x16\n\x0etimeInProgress\x18\x05 \x01(\x02\x12\x15\n\rtimeDelivered\x18\x06 \x01(\x02\x12\x0c\n\x04test\x18\x07 \x01(\tb\x06proto3'
 )
 
 
@@ -71,7 +71,7 @@ _ORDERUPDATE = _descriptor.Descriptor(
     _descriptor.FieldDescriptor(
       name='vehicle', full_name='lieferbot.OrderUpdate.vehicle', index=1,
       number=2, type=3, cpp_type=2, label=1,
-      has_default_value=False, default_value=0,
+      has_default_value=True, default_value=-1,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
@@ -139,7 +139,7 @@ _ORDERSTATE = _descriptor.Descriptor(
   fields=[
     _descriptor.FieldDescriptor(
       name='status', full_name='lieferbot.OrderState.status', index=0,
-      number=2, type=14, cpp_type=8, label=1,
+      number=1, type=14, cpp_type=8, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -242,6 +242,13 @@ _REPORT = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='test', full_name='lieferbot.Report.test', index=6,
+      number=7, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -255,7 +262,7 @@ _REPORT = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=279,
-  serialized_end=409,
+  serialized_end=423,
 )
 
 _ORDERSTATE.fields_by_name['status'].enum_type = _ORDERSTATE_STATUSTYPE
@@ -301,6 +308,7 @@ Report = _reflection.GeneratedProtocolMessageType('Report', (_message.Message,),
   # @@protoc_insertion_point(class_scope:lieferbot.Report)
   })
 _sym_db.RegisterMessage(Report)
+
 
 
 # @@protoc_insertion_point(module_scope)

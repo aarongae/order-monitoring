@@ -14,25 +14,14 @@ functions = StatefulFunctions()
 
 @functions.bind("lieferbot/monitoring")
 def monitore(context, order_update: OrderUpdate):
+    # Stateful function, represents the orders
     state = context.state('order_state').unpack(OrderState)
     if not state:
         state = OrderState()
         state.status = 0
     else:
-        state.status += 1        
+        state.status += 1
     context.state('order_state').pack(state)
-
-    response = compute_status(order_update, state.status)
-    compute_time(context, order_update)
-
-    egress_message = kafka_egress_record(
-        topic="status", key=order_update.id, value=response)
-    context.pack_and_send_egress("lieferbot/status", egress_message)
-
-
-def compute_time(context, order_update: OrderUpdate):
-
-    state = context.state('order_state').unpack(OrderState)
 
     if state.status == 0:
         timeunassigned = context.state('time_unassigned').unpack(Time)
@@ -41,7 +30,6 @@ def compute_time(context, order_update: OrderUpdate):
             timeunassigned = Time()
             timeunassigned.time = t
         context.state('time_unassigned').pack(timeunassigned)
-
     elif state.status == 1:
         timeassigned = context.state('time_assigned').unpack(Time)
         t = time.time()
@@ -63,40 +51,50 @@ def compute_time(context, order_update: OrderUpdate):
             t = time.time()
             timedelivered = Time()
             timedelivered.time = t
-
         context.state('time_delivered').pack(timedelivered)
 
-        response = Report()
-        response.id = order_update.id
-        response.vehicle = order_update.vehicle
-
-        timeunassigned = context.state('time_unassigned').unpack(Time)
-        response.timeUnassigned = timeunassigned.time
-        context.state('time_unassigned').pack(timeunassigned)
-
-        timeassigned = context.state('time_assigned').unpack(Time)
-        response.timeAssigned = timeassigned.time
-        context.state('time_assigned').pack(timeassigned)
-
-        timeprogress = context.state('time_in_progress').unpack(Time)
-        response.timeInProgress = timeprogress.time
-        context.state('time_in_progress').pack(timeprogress)
-
-        timedelivered = context.state('time_delivered').unpack(Time)
-        response.timeDelivered = timedelivered.time
-        context.state('time_delivered').pack(timedelivered)
+        report = compute_report(context, order_update, state.status)
 
         egress_message = kafka_egress_record(
-            topic="reports", value=response)
+            topic="reports",  key=order_update.id, value=report)
         context.pack_and_send_egress("lieferbot/status", egress_message)
 
-    context.state('order_state').pack(state)
+    response = compute_status(order_update, state.status)
 
+    egress_message = kafka_egress_record(
+        topic="status", key=order_update.id, value=response)
+    context.pack_and_send_egress("lieferbot/status", egress_message)
+
+    
+def compute_report(context, order_update: OrderUpdate, state):
+    # Compute the final report, after an order has reached the state delivered
+    report = Report()
+    report.id = order_update.id
+    report.vehicle = order_update.vehicle
+
+    timeunassigned = context.state('time_unassigned').unpack(Time)
+    report.timeUnassigned = timeunassigned.time
+    context.state('time_unassigned').pack(timeunassigned)
+
+    timeassigned = context.state('time_assigned').unpack(Time)
+    report.timeAssigned = timeassigned.time
+    context.state('time_assigned').pack(timeassigned)
+
+    timeprogress = context.state('time_in_progress').unpack(Time)
+    report.timeInProgress = timeprogress.time
+    context.state('time_in_progress').pack(timeprogress)
+
+    timedelivered = context.state('time_delivered').unpack(Time)
+    report.timeDelivered = timedelivered.time
+    context.state('time_delivered').pack(timedelivered)
+
+    report.test = str(report.timeDelivered - report.timeUnassigned)
+
+    return report
+        
 
 def compute_status(order_update:OrderUpdate, state):
-    """
-    Compute order status based on @state
-    """
+    # Compute the status update, after an order has reached a new status
     now = datetime.now()
 
     if state == 0:
@@ -128,7 +126,6 @@ handler = RequestReplyHandler(functions)
 # Serve the endpoint
 #
 
-
 app = Flask(__name__)
 
 
@@ -138,7 +135,6 @@ def handle():
     response = make_response(response_data)
     response.headers.set('Content-Type', 'application/octet-stream')
     return response
-
 
 if __name__ == "__main__":
     app.run()

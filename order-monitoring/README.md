@@ -24,11 +24,13 @@ docker-compose up
 [Alternatively:
 docker-compose up -d.
 To see what comes out of the topics `status` and `reports`:
-docker-compose logs -f event-generator]
+docker-compose logs -f order-generator]
 
 # Für Protokolländerungen
 
-1. Installiere Protobuf Compiler 1. Binary Windows Version 2. Python Umgebung
+1. Installiere Protobuf Compiler 
+   1. Binary Windows Version 
+   2. Python Umgebung
    https://github.com/protocolbuffers/protobuf/releases (Siehe ReadMe)
 
 Generiere pb2.py aus .proto Datei:

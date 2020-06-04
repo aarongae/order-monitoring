@@ -32,7 +32,7 @@ def produce():
     for request in random_requests():
         key = request.id.encode('utf-8')
         val = request.SerializeToString()
-        producer.send(topic='names', key=key, value=val)
+        producer.send(topic='orders', key=key, value=val)
         producer.flush()
         time.sleep(delay_seconds)
 
@@ -56,12 +56,13 @@ def consume2():
         response = Report()
         response.ParseFromString(message.value)
 
-        # tu = time.ctime(int(response.timeUnassigned))
-        # ta = time.ctime(int(response.timeAssigned))
-        # tp = time.ctime(int(response.timeInProgress))
-        # td = time.ctime(int(response.timeDelivered))
-    
-        print("Order:%s Vehicle:%d UNASSIGNED:%s ASSIGNED:%s IN_PROGRESS:%s DELIVERED:%s" % (response.id, response.vehicle, response.timeUnassigned, response.timeAssigned, response.timeInProgress, response.timeDelivered), flush=True)
+        tu = time.ctime(int(response.timeUnassigned))
+        ta = time.ctime(int(response.timeAssigned))
+        tp = time.ctime(int(response.timeInProgress))
+        td = time.ctime(int(response.timeDelivered))
+
+        print("Order:%s Vehicle:%d UNASSIGNED:%s ASSIGNED:%s IN_PROGRESS:%s DELIVERED:%s ThroughputTime:%s" 
+            % (response.id, response.vehicle, response.timeUnassigned, response.timeAssigned, response.timeInProgress, response.timeDelivered, response.test), flush=True)
 
 
 def handler(number, frame):
@@ -98,6 +99,7 @@ def main():
     producer.join()
     consumer.join()
     consumer2.join()
+
 
 if __name__ == "__main__":
     main()
