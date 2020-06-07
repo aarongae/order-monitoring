@@ -1,68 +1,45 @@
 import signal
 import sys
-import time
 import threading
-
-import random
+import os
+import time
 
 from kafka.errors import NoBrokersAvailable
-
-from messages_pb2 import OrderUpdate, OrderStatus, Report
-
 from kafka import KafkaProducer
-from kafka import KafkaConsumer
+
+from messages_pb2 import OrderUpdate, StatusType
 
 KAFKA_BROKER = "kafka-broker:9092"
-ORDER_ID = ["105047", "124686", "136861", "139901", "153463", "155573"]
-VEHICLE_ID = ["-1", "1", "2", "3", "4", "5"]
+CSV_PATH = "ka-medium-1_orderStatus.csv"
+DELAY = 1
 
 
-def random_requests():
-    """Generate infinite sequence of random OrderUpdates."""
-    while True:
-        request = OrderUpdate()
-        request.id = random.choice(ORDER_ID)
-        #request.vehicle = random.choice(VEHICLE_ID)
-        yield request
-
-
-def produce():
-    delay_seconds = 1
+def send_csv():
     producer = KafkaProducer(bootstrap_servers=[KAFKA_BROKER])
-    for request in random_requests():
-        key = request.id.encode('utf-8')
-        val = request.SerializeToString()
+
+    csv_file = open(CSV_PATH)
+    csv_reader = csv.DictReader(csv_file)
+
+    for row in csv_reader:
+        update = OrderUpdate()
+        update.id = row["OrderId"]
+        update.vehicle = row["VehicleId"]
+        if row["OrderStatus"] == "UNASSIGNED":
+            update.status = StatusType.UNASSIGNED
+        elif row["OrderStatus"] == "ASSIGNED":
+            update.status = StatusType.ASSIGNED
+        elif row["OrderStatus"] == "IN_PROGRESS":
+            update.status = StatusType.INPROGRESS
+        elif row["OrderStatus"] == "DELIVERED":
+            update.status = StatusType.DELIVERED
+        update.time = float(row["unix_timestamp"])
+        key = update.id.encode('utf-8')
+        val = update.SerializeToString()
         producer.send(topic='orders', key=key, value=val)
         producer.flush()
-        time.sleep(delay_seconds)
+        time.sleep(DELAY)
 
-
-def consume():
-    consumer = KafkaConsumer(
-        'status',
-        bootstrap_servers=[KAFKA_BROKER],
-        auto_offset_reset='earliest')
-    for message in consumer:
-        response = OrderStatus()
-        response.ParseFromString(message.value)
-        print("%s" % (response.status), flush=True)
-
-def consume2():
-    consumer2 = KafkaConsumer(
-        'reports',
-        bootstrap_servers=[KAFKA_BROKER],
-        auto_offset_reset='earliest')
-    for message in consumer2:
-        response = Report()
-        response.ParseFromString(message.value)
-
-        tu = time.ctime(int(response.timeUnassigned))
-        ta = time.ctime(int(response.timeAssigned))
-        tp = time.ctime(int(response.timeInProgress))
-        td = time.ctime(int(response.timeDelivered))
-
-        print("Order:%s Vehicle:%d UNASSIGNED:%s ASSIGNED:%s IN_PROGRESS:%s DELIVERED:%s ThroughputTime:%s" 
-            % (response.id, response.vehicle, response.timeUnassigned, response.timeAssigned, response.timeInProgress, response.timeDelivered, response.test), flush=True)
+    csv_file.close()
 
 
 def handler(number, frame):
@@ -87,18 +64,9 @@ def safe_loop(fn):
 def main():
     signal.signal(signal.SIGTERM, handler)
 
-    producer = threading.Thread(target=safe_loop, args=[produce])
+    producer = threading.Thread(target=safe_loop, args=[send_csv])
     producer.start()
-
-    consumer = threading.Thread(target=safe_loop, args=[consume])
-    consumer.start()
-
-    consumer2 = threading.Thread(target=safe_loop, args=[consume2])
-    consumer2.start()
-
     producer.join()
-    consumer.join()
-    consumer2.join()
 
 
 if __name__ == "__main__":

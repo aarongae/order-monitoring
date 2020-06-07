@@ -8,6 +8,10 @@
 
 1. Build the flink-statefun and flink docker images (once)
 
+   - Clone StateFun repository
+   - Go into repository
+   - Run `mvn clean package`
+   - Go to 'order-monitoring' directory
    - `cd docker/`
    - Run `build-stateful-functions.sh`
 
