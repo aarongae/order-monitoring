@@ -4,14 +4,6 @@ syntax = "proto3";
 
 package lieferbot;
 
-// The possible states
-enum StatusType{
-        UNASSIGNED = 0;
-        ASSIGNED = 1;
-        INPROGRESS = 2;
-        DELIVERED =3;
-    }
-
 // External request sent per order update
 message OrderUpdate {
     // The id of the order
@@ -19,7 +11,7 @@ message OrderUpdate {
     // The vehicle id of the order
     string vehicle = 2;
     // The current status of the order
-    StatusType status = 3;
+    string status = 3;
     // The time the update was made
     float time = 4;
 }
@@ -27,7 +19,7 @@ message OrderUpdate {
 // An internal message used to store state of the order
 message OrderState {
     // The current state of the order
-    StatusType status = 1;
+    string status = 1;
 }
 
 // An internal message used to store timestamps

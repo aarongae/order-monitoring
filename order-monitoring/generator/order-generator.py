@@ -3,11 +3,12 @@ import sys
 import threading
 import os
 import time
+import csv
 
 from kafka.errors import NoBrokersAvailable
 from kafka import KafkaProducer
 
-from messages_pb2 import OrderUpdate, StatusType
+from messages_pb2 import OrderUpdate
 
 KAFKA_BROKER = "kafka-broker:9092"
 CSV_PATH = "ka-medium-1_orderStatus.csv"
@@ -24,14 +25,7 @@ def send_csv():
         update = OrderUpdate()
         update.id = row["OrderId"]
         update.vehicle = row["VehicleId"]
-        if row["OrderStatus"] == "UNASSIGNED":
-            update.status = StatusType.UNASSIGNED
-        elif row["OrderStatus"] == "ASSIGNED":
-            update.status = StatusType.ASSIGNED
-        elif row["OrderStatus"] == "IN_PROGRESS":
-            update.status = StatusType.INPROGRESS
-        elif row["OrderStatus"] == "DELIVERED":
-            update.status = StatusType.DELIVERED
+        update.status = row["OrderStatus"]
         update.time = float(row["unix_timestamp"])
         key = update.id.encode('utf-8')
         val = update.SerializeToString()

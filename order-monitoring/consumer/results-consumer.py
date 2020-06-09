@@ -1,7 +1,7 @@
 import signal
 import sys
 import threading
-import datetime
+from datetime import datetime
 import time
 
 from kafka.errors import NoBrokersAvailable

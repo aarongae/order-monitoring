@@ -1,7 +1,7 @@
 from flask import request
 from flask import make_response
 from flask import Flask
-from messages_pb2 import OrderState, OrderUpdate, Report, Time, StatusType
+from messages_pb2 import OrderState, OrderUpdate, Report, Time
 
 from statefun import StatefulFunctions
 from statefun import RequestReplyHandler
@@ -17,31 +17,33 @@ functions = StatefulFunctions()
 def monitor(context, order_update: OrderUpdate):
 
     state = context.state('order_state').unpack(OrderState)
+    if not state:
+        state = OrderState()
     state.status = order_update.status
     context.state('order_state').pack(state)
 
-    if state.status == StatusType.UNASSIGNED:
+    if state.status == "UNASSIGNED":
         time_unassigned = context.state('time_unassigned').unpack(Time)
         if not time_unassigned:
             time_unassigned = Time()
             time_unassigned.time = order_update.time
         context.state('time_unassigned').pack(time_unassigned)
 
-    elif state.status == StatusType.ASSIGNED:
+    elif state.status == "ASSIGNED":
         time_assigned = context.state('time_assigned').unpack(Time)
         if not time_assigned:
             time_assigned = Time()
             time_assigned.time = order_update.time
         context.state('time_assigned').pack(time_assigned)
 
-    elif state.status == StatusType.INPROGRESS:
+    elif state.status == "IN_PROGRESS":
         time_in_progress = context.state('time_in_progress').unpack(Time)
         if not time_in_progress:
             time_in_progress = Time()
             time_in_progress.time = order_update.time
         context.state('time_in_progress').pack(time_in_progress)
 
-    elif state.status == StatusType.DELIVERED:
+    elif state.status == "DELIVERED":
         time_delivered = context.state('time_delivered').unpack(Time)
         if not time_delivered:
             time_delivered = Time()
