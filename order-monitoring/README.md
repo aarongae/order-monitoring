@@ -43,4 +43,4 @@ protoc messages.proto --python_out=./
 # Kafka-Fehler beheben
 
 Alle Container entfernen:
-docker rm \$(docker ps -aq)
+docker rm $(docker ps -aq)

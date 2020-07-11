@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x0emessages.proto\x12\tlieferbot\"H\n\x0bOrderUpdate\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0f\n\x07vehicle\x18\x02 \x01(\t\x12\x0e\n\x06status\x18\x03 \x01(\t\x12\x0c\n\x04time\x18\x04 \x01(\x02\"\x1c\n\nOrderState\x12\x0e\n\x06status\x18\x01 \x01(\t\"\x14\n\x04Time\x12\x0c\n\x04time\x18\x01 \x01(\x02\"\x82\x01\n\x06Report\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0f\n\x07vehicle\x18\x02 \x01(\t\x12\x16\n\x0etimeUnassigned\x18\x03 \x01(\x02\x12\x14\n\x0ctimeAssigned\x18\x04 \x01(\x02\x12\x16\n\x0etimeInProgress\x18\x05 \x01(\x02\x12\x15\n\rtimeDelivered\x18\x06 \x01(\x02\x62\x06proto3'
+  serialized_pb=b'\n\x0emessages.proto\x12\tlieferbot\"H\n\x0bOrderUpdate\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0f\n\x07vehicle\x18\x02 \x01(\t\x12\x0e\n\x06status\x18\x03 \x01(\t\x12\x0c\n\x04time\x18\x04 \x01(\x02\"\x1c\n\nOrderState\x12\x0e\n\x06status\x18\x01 \x01(\t\":\n\x16OrderStateWithPrevious\x12\x0e\n\x06status\x18\x01 \x01(\t\x12\x10\n\x08previous\x18\x02 \x01(\x08\"\x14\n\x04Time\x12\x0c\n\x04time\x18\x01 \x01(\x02\"\x1a\n\x07NoState\x12\x0f\n\x07\x63ounter\x18\x01 \x01(\x03\"\x82\x01\n\x06Report\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0f\n\x07vehicle\x18\x02 \x01(\t\x12\x16\n\x0etimeUnassigned\x18\x03 \x01(\x02\x12\x14\n\x0ctimeAssigned\x18\x04 \x01(\x02\x12\x16\n\x0etimeInProgress\x18\x05 \x01(\x02\x12\x15\n\rtimeDelivered\x18\x06 \x01(\x02\"_\n\x08Overview\x12\x14\n\x0cnoUnassigned\x18\x01 \x01(\x03\x12\x12\n\nnoAssigned\x18\x02 \x01(\x03\x12\x14\n\x0cnoInProgress\x18\x03 \x01(\x03\x12\x13\n\x0bnoDelivered\x18\x04 \x01(\x03\x62\x06proto3'
 )
 
 
@@ -110,6 +110,45 @@ _ORDERSTATE = _descriptor.Descriptor(
 )
 
 
+_ORDERSTATEWITHPREVIOUS = _descriptor.Descriptor(
+  name='OrderStateWithPrevious',
+  full_name='lieferbot.OrderStateWithPrevious',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='status', full_name='lieferbot.OrderStateWithPrevious.status', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='previous', full_name='lieferbot.OrderStateWithPrevious.previous', index=1,
+      number=2, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=133,
+  serialized_end=191,
+)
+
+
 _TIME = _descriptor.Descriptor(
   name='Time',
   full_name='lieferbot.Time',
@@ -137,8 +176,40 @@ _TIME = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=133,
-  serialized_end=153,
+  serialized_start=193,
+  serialized_end=213,
+)
+
+
+_NOSTATE = _descriptor.Descriptor(
+  name='NoState',
+  full_name='lieferbot.NoState',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='counter', full_name='lieferbot.NoState.counter', index=0,
+      number=1, type=3, cpp_type=2, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=215,
+  serialized_end=241,
 )
 
 
@@ -204,14 +275,70 @@ _REPORT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=156,
-  serialized_end=286,
+  serialized_start=244,
+  serialized_end=374,
+)
+
+
+_OVERVIEW = _descriptor.Descriptor(
+  name='Overview',
+  full_name='lieferbot.Overview',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='noUnassigned', full_name='lieferbot.Overview.noUnassigned', index=0,
+      number=1, type=3, cpp_type=2, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='noAssigned', full_name='lieferbot.Overview.noAssigned', index=1,
+      number=2, type=3, cpp_type=2, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='noInProgress', full_name='lieferbot.Overview.noInProgress', index=2,
+      number=3, type=3, cpp_type=2, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='noDelivered', full_name='lieferbot.Overview.noDelivered', index=3,
+      number=4, type=3, cpp_type=2, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=376,
+  serialized_end=471,
 )
 
 DESCRIPTOR.message_types_by_name['OrderUpdate'] = _ORDERUPDATE
 DESCRIPTOR.message_types_by_name['OrderState'] = _ORDERSTATE
+DESCRIPTOR.message_types_by_name['OrderStateWithPrevious'] = _ORDERSTATEWITHPREVIOUS
 DESCRIPTOR.message_types_by_name['Time'] = _TIME
+DESCRIPTOR.message_types_by_name['NoState'] = _NOSTATE
 DESCRIPTOR.message_types_by_name['Report'] = _REPORT
+DESCRIPTOR.message_types_by_name['Overview'] = _OVERVIEW
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 OrderUpdate = _reflection.GeneratedProtocolMessageType('OrderUpdate', (_message.Message,), {
@@ -228,6 +355,13 @@ OrderState = _reflection.GeneratedProtocolMessageType('OrderState', (_message.Me
   })
 _sym_db.RegisterMessage(OrderState)
 
+OrderStateWithPrevious = _reflection.GeneratedProtocolMessageType('OrderStateWithPrevious', (_message.Message,), {
+  'DESCRIPTOR' : _ORDERSTATEWITHPREVIOUS,
+  '__module__' : 'messages_pb2'
+  # @@protoc_insertion_point(class_scope:lieferbot.OrderStateWithPrevious)
+  })
+_sym_db.RegisterMessage(OrderStateWithPrevious)
+
 Time = _reflection.GeneratedProtocolMessageType('Time', (_message.Message,), {
   'DESCRIPTOR' : _TIME,
   '__module__' : 'messages_pb2'
@@ -235,12 +369,26 @@ Time = _reflection.GeneratedProtocolMessageType('Time', (_message.Message,), {
   })
 _sym_db.RegisterMessage(Time)
 
+NoState = _reflection.GeneratedProtocolMessageType('NoState', (_message.Message,), {
+  'DESCRIPTOR' : _NOSTATE,
+  '__module__' : 'messages_pb2'
+  # @@protoc_insertion_point(class_scope:lieferbot.NoState)
+  })
+_sym_db.RegisterMessage(NoState)
+
 Report = _reflection.GeneratedProtocolMessageType('Report', (_message.Message,), {
   'DESCRIPTOR' : _REPORT,
   '__module__' : 'messages_pb2'
   # @@protoc_insertion_point(class_scope:lieferbot.Report)
   })
 _sym_db.RegisterMessage(Report)
+
+Overview = _reflection.GeneratedProtocolMessageType('Overview', (_message.Message,), {
+  'DESCRIPTOR' : _OVERVIEW,
+  '__module__' : 'messages_pb2'
+  # @@protoc_insertion_point(class_scope:lieferbot.Overview)
+  })
+_sym_db.RegisterMessage(Overview)
 
 
 # @@protoc_insertion_point(module_scope)

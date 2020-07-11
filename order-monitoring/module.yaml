@@ -16,8 +16,31 @@ module:
               - time_assigned
               - time_in_progress
               - time_delivered
-            maxNumBatchRequests: 500
-            timeout: 2min
+            maxNumBatchRequests: 10000
+            timeout: 10min
+      - function:
+            meta:
+              kind: http
+              type: lieferbot/overview
+            spec:
+              endpoint: http://python-worker:8000/statefun
+              states:
+                - no_unassigned
+                - no_assigned
+                - no_in_progress
+                - no_delivered
+            maxNumBatchRequests: 10000
+            timeout: 10min
+      - function:
+            meta:
+              kind: http
+              type: lieferbot/timeout
+            spec:
+              endpoint: http://python-worker:8000/statefun
+              states:
+                - expired
+            maxNumBatchRequests: 10000
+            timeout: 10min
     ingresses:
       - ingress:
           meta:

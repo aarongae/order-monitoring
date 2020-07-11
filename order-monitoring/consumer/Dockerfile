@@ -6,8 +6,8 @@ WORKDIR /app
 RUN pip install protobuf
 RUN pip install kafka-python
 
-COPY results-consumer.py /app
-COPY messages_pb2.py /app
+COPY consumer/results-consumer.py /app
+COPY protobuf/messages_pb2.py /app
 
 
 CMD ["python", "/app/results-consumer.py"]

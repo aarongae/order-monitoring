@@ -7,7 +7,7 @@ import time
 from kafka.errors import NoBrokersAvailable
 from kafka import KafkaConsumer
 
-from messages_pb2 import Report
+from messages_pb2 import Report, Overview
 
 KAFKA_BROKER = "kafka-broker:9092"
 
@@ -21,13 +21,29 @@ def consume():
         response = Report()
         response.ParseFromString(message.value)
 
-        print("Order:{} Vehicle:{} UNASSIGNED:{} ASSIGNED:{} IN_PROGRESS:{} DELIVERED:{} ThroughputTime:{}".format(
+        print("Order:{} Vehicle:{} UNASSIGNED:{} ASSIGNED:{} IN_PROGRESS:{} DELIVERED:{} ThroughputTime:{}"
+            .format(
             response.id, response.vehicle,
             datetime.utcfromtimestamp(response.timeUnassigned).strftime('%Y-%m-%d %H:%M:%S'),
             datetime.utcfromtimestamp(response.timeAssigned).strftime('%Y-%m-%d %H:%M:%S'),
             datetime.utcfromtimestamp(response.timeInProgress).strftime('%Y-%m-%d %H:%M:%S'),
             datetime.utcfromtimestamp(response.timeDelivered).strftime('%Y-%m-%d %H:%M:%S'),
             str(datetime.utcfromtimestamp(response.timeDelivered) - datetime.utcfromtimestamp(response.timeUnassigned))
+            ),
+            flush=True
+        )
+
+def consume_overview():
+    consumer_overview = KafkaConsumer(
+        'overviews',
+        bootstrap_servers=[KAFKA_BROKER],
+        auto_offset_reset='earliest')
+    for message in consumer_overview:
+        response = Overview()
+        response.ParseFromString(message.value)
+
+        print("Overview: UNASSIGNED:{} ASSIGNED:{} IN_PROGRESS:{} DELIVERED:{}".format(
+            response.noUnassigned, response.noAssigned, response.noInProgress, response.noDelivered
             ),
             flush=True
         )
@@ -56,8 +72,14 @@ def main():
     signal.signal(signal.SIGTERM, handler)
 
     consumer = threading.Thread(target=safe_loop, args=[consume])
+
+    consumer_overview = threading.Thread(target=safe_loop, args=[consume_overview])
+
     consumer.start()
+    consumer_overview.start()
+
     consumer.join()
+    consumer_overview.join()
 
 
 if __name__ == "__main__":

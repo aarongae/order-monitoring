@@ -1,7 +1,6 @@
 import signal
 import sys
 import threading
-import os
 import time
 import csv
 
