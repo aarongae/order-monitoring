@@ -27,8 +27,8 @@ docker-compose up
 
 [Alternatively:
 docker-compose up -d.
-To see what comes out of the topics `status` and `reports`:
-docker-compose logs -f order-generator]
+To see what comes out of the topics `reports`, `overviews` and `timeouts`:
+docker-compose logs -f results-consumer]
 
 # Für Protokolländerungen
 

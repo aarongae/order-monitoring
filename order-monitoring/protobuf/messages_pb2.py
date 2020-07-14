@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x0emessages.proto\x12\tlieferbot\"H\n\x0bOrderUpdate\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0f\n\x07vehicle\x18\x02 \x01(\t\x12\x0e\n\x06status\x18\x03 \x01(\t\x12\x0c\n\x04time\x18\x04 \x01(\x02\"\x1c\n\nOrderState\x12\x0e\n\x06status\x18\x01 \x01(\t\":\n\x16OrderStateWithPrevious\x12\x0e\n\x06status\x18\x01 \x01(\t\x12\x10\n\x08previous\x18\x02 \x01(\x08\"\x14\n\x04Time\x12\x0c\n\x04time\x18\x01 \x01(\x02\"\x1a\n\x07NoState\x12\x0f\n\x07\x63ounter\x18\x01 \x01(\x03\"\x82\x01\n\x06Report\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0f\n\x07vehicle\x18\x02 \x01(\t\x12\x16\n\x0etimeUnassigned\x18\x03 \x01(\x02\x12\x14\n\x0ctimeAssigned\x18\x04 \x01(\x02\x12\x16\n\x0etimeInProgress\x18\x05 \x01(\x02\x12\x15\n\rtimeDelivered\x18\x06 \x01(\x02\"_\n\x08Overview\x12\x14\n\x0cnoUnassigned\x18\x01 \x01(\x03\x12\x12\n\nnoAssigned\x18\x02 \x01(\x03\x12\x14\n\x0cnoInProgress\x18\x03 \x01(\x03\x12\x13\n\x0bnoDelivered\x18\x04 \x01(\x03\x62\x06proto3'
+  serialized_pb=b'\n\x0emessages.proto\x12\tlieferbot\"H\n\x0bOrderUpdate\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0f\n\x07vehicle\x18\x02 \x01(\t\x12\x0e\n\x06status\x18\x03 \x01(\t\x12\x0c\n\x04time\x18\x04 \x01(\x02\"\x1c\n\nOrderState\x12\x0e\n\x06status\x18\x01 \x01(\t\":\n\x16OrderStateWithPrevious\x12\x0e\n\x06status\x18\x01 \x01(\t\x12\x10\n\x08previous\x18\x02 \x01(\x08\"\x14\n\x04Time\x12\x0c\n\x04time\x18\x01 \x01(\x02\"\x1a\n\x07NoState\x12\x0f\n\x07\x63ounter\x18\x01 \x01(\x03\"\x82\x01\n\x06Report\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0f\n\x07vehicle\x18\x02 \x01(\t\x12\x16\n\x0etimeUnassigned\x18\x03 \x01(\x02\x12\x14\n\x0ctimeAssigned\x18\x04 \x01(\x02\x12\x16\n\x0etimeInProgress\x18\x05 \x01(\x02\x12\x15\n\rtimeDelivered\x18\x06 \x01(\x02\"_\n\x08Overview\x12\x14\n\x0cnoUnassigned\x18\x01 \x01(\x03\x12\x12\n\nnoAssigned\x18\x02 \x01(\x03\x12\x14\n\x0cnoInProgress\x18\x03 \x01(\x03\x12\x13\n\x0bnoDelivered\x18\x04 \x01(\x03\"F\n\rTimeoutReport\x12$\n\x05order\x18\x01 \x01(\x0b\x32\x15.lieferbot.OrderState\x12\x0f\n\x07orderId\x18\x02 \x01(\tb\x06proto3'
 )
 
 
@@ -332,6 +332,46 @@ _OVERVIEW = _descriptor.Descriptor(
   serialized_end=471,
 )
 
+
+_TIMEOUTREPORT = _descriptor.Descriptor(
+  name='TimeoutReport',
+  full_name='lieferbot.TimeoutReport',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='order', full_name='lieferbot.TimeoutReport.order', index=0,
+      number=1, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='orderId', full_name='lieferbot.TimeoutReport.orderId', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=473,
+  serialized_end=543,
+)
+
+_TIMEOUTREPORT.fields_by_name['order'].message_type = _ORDERSTATE
 DESCRIPTOR.message_types_by_name['OrderUpdate'] = _ORDERUPDATE
 DESCRIPTOR.message_types_by_name['OrderState'] = _ORDERSTATE
 DESCRIPTOR.message_types_by_name['OrderStateWithPrevious'] = _ORDERSTATEWITHPREVIOUS
@@ -339,6 +379,7 @@ DESCRIPTOR.message_types_by_name['Time'] = _TIME
 DESCRIPTOR.message_types_by_name['NoState'] = _NOSTATE
 DESCRIPTOR.message_types_by_name['Report'] = _REPORT
 DESCRIPTOR.message_types_by_name['Overview'] = _OVERVIEW
+DESCRIPTOR.message_types_by_name['TimeoutReport'] = _TIMEOUTREPORT
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 OrderUpdate = _reflection.GeneratedProtocolMessageType('OrderUpdate', (_message.Message,), {
@@ -389,6 +430,13 @@ Overview = _reflection.GeneratedProtocolMessageType('Overview', (_message.Messag
   # @@protoc_insertion_point(class_scope:lieferbot.Overview)
   })
 _sym_db.RegisterMessage(Overview)
+
+TimeoutReport = _reflection.GeneratedProtocolMessageType('TimeoutReport', (_message.Message,), {
+  'DESCRIPTOR' : _TIMEOUTREPORT,
+  '__module__' : 'messages_pb2'
+  # @@protoc_insertion_point(class_scope:lieferbot.TimeoutReport)
+  })
+_sym_db.RegisterMessage(TimeoutReport)
 
 
 # @@protoc_insertion_point(module_scope)

@@ -34,13 +34,23 @@ module:
       - function:
             meta:
               kind: http
-              type: lieferbot/timeout
+              type: lieferbot/timeout_counter
             spec:
               endpoint: http://python-worker:8000/statefun
               states:
                 - expired
             maxNumBatchRequests: 10000
             timeout: 10min
+      - function:
+          meta:
+            kind: http
+            type: lieferbot/timeout_check
+          spec:
+            endpoint: http://python-worker:8000/statefun
+            states:
+              - order_state
+          maxNumBatchRequests: 10000
+          timeout: 10min
     ingresses:
       - ingress:
           meta:

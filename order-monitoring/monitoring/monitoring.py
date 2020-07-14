@@ -1,12 +1,13 @@
 from flask import request
 from flask import make_response
 from flask import Flask
-from messages_pb2 import OrderState, OrderUpdate, Report, Time, Overview, NoState, OrderStateWithPrevious
+from messages_pb2 import OrderState, OrderUpdate, Report, Time, Overview, NoState, OrderStateWithPrevious, TimeoutReport
 
 from statefun import StatefulFunctions
 from statefun import RequestReplyHandler
 from statefun import kafka_egress_record
-
+from datetime import timedelta
+import typing
 
 functions = StatefulFunctions()
 
@@ -23,6 +24,7 @@ def monitor(context, order_update: OrderUpdate):
         state_with_previous.previous = False
     else:
         state_with_previous.previous = True
+
     state.status = order_update.status
     context.state('order_state').pack(state)
 
@@ -61,6 +63,8 @@ def monitor(context, order_update: OrderUpdate):
         context.pack_and_send_egress("lieferbot/status", egress_message)
 
     context.pack_and_send("lieferbot/overview", "overview", state_with_previous)
+    context.pack_and_send("lieferbot/timeout_counter", order_update.id, order_update)
+    context.pack_and_send("lieferbot/timeout_check", order_update.id, state)
 
 
 def compute_report(context, order_update: OrderUpdate):
@@ -192,10 +196,35 @@ def compute_overview(context):
     return overview
 
 
-@functions.bind("lieferbot/timeout")
+@functions.bind("lieferbot/timeout_counter")
 def timeout(context, order_update: OrderUpdate):
 
-   pass
+    if(order_update.status!="DELIVERED"):
+        delay = timedelta(seconds=30)
+        context.pack_and_send_after(delay, "lieferbot/timeout_check", order_update.id, order_update)
+
+
+@functions.bind("lieferbot/timeout_check")
+def timeout(context, request: typing.Union[OrderState, OrderUpdate]):
+
+    if isinstance(request, OrderState):
+        state = context.state('order_state').unpack(OrderState)
+        if not state:
+            state = OrderState()
+        state.status = request.status
+        context.state('order_state').pack(state)
+
+    elif isinstance(request, OrderUpdate):
+        state = context.state('order_state').unpack(OrderState)
+        if (state.status == request.status):
+            report = TimeoutReport()
+            report.order.status = state.status
+            report.orderId = request.id
+
+            egress_message = kafka_egress_record(
+                topic="timeouts", key=request.id, value=report)
+            context.pack_and_send_egress("lieferbot/status", egress_message)
+
 
 handler = RequestReplyHandler(functions)
 

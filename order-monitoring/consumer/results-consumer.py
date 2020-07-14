@@ -7,7 +7,7 @@ import time
 from kafka.errors import NoBrokersAvailable
 from kafka import KafkaConsumer
 
-from messages_pb2 import Report, Overview
+from messages_pb2 import Report, Overview, TimeoutReport
 
 KAFKA_BROKER = "kafka-broker:9092"
 
@@ -48,6 +48,21 @@ def consume_overview():
             flush=True
         )
 
+def consume_timeout():
+    consumer_timeout = KafkaConsumer(
+        'timeouts',
+        bootstrap_servers=[KAFKA_BROKER],
+        auto_offset_reset='earliest')
+    for message in consumer_timeout:
+        response = TimeoutReport()
+        response.ParseFromString(message.value)
+
+        print("TIMEOUT Order:{} State:{}".format(
+            response.orderId, response.order.status
+            ),
+            flush=True
+        )
+
 
 def handler(number, frame):
     sys.exit(0)
@@ -72,14 +87,16 @@ def main():
     signal.signal(signal.SIGTERM, handler)
 
     consumer = threading.Thread(target=safe_loop, args=[consume])
-
     consumer_overview = threading.Thread(target=safe_loop, args=[consume_overview])
+    consumer_timeout = threading.Thread(target=safe_loop, args=[consume_timeout])
 
     consumer.start()
     consumer_overview.start()
+    consumer_timeout.start()
 
     consumer.join()
     consumer_overview.join()
+    consumer_timeout.start()
 
 
 if __name__ == "__main__":
