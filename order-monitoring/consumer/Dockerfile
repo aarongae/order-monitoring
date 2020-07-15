@@ -5,6 +5,7 @@ WORKDIR /app
 
 RUN pip install protobuf
 RUN pip install kafka-python
+RUN pip install pymysql
 
 COPY results-consumer.py /app
 COPY messages_pb2.py /app

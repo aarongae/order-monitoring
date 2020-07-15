@@ -63,3 +63,28 @@ services:
       dockerfile: Dockerfile
     depends_on:
       - kafka-broker
+      - database
+    links:
+      - database:database
+  app:
+    build:
+      context: dashboard
+      dockerfile: Dockerfile
+    ports:
+      - 8050:8050
+    depends_on:
+      - database
+    links:
+      - database:database
+  database:
+    image: mysql
+    restart: always
+    environment:
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD=password
+      - MYSQL_DATABASE=lieferbot
+      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+    ports:
+      - 3306:3306
+    expose:
+      - 3306
