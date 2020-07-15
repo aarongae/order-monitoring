@@ -9,6 +9,7 @@ docker rmi order-monitoring_order-generator
 docker rmi order-monitoring_python-worker
 docker rmi order-monitoring_master
 docker rmi order-monitoring_worker
+docker rmi order-monitoring_results-consumer
 
 # copy the whl distribution
 cp ../statefun-python-sdk/dist/apache_flink_statefun-*-py3-none-any.whl monitoring/apache_flink_statefun-snapshot-py3-none-any.whl 2>/dev/null
