@@ -78,6 +78,8 @@ services:
       - database:database
   database:
     image: mysql
+    volumes:
+      - ./var/lib/mysql
     restart: always
     environment:
       - MYSQL_USER=user

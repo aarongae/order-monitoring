@@ -15,7 +15,8 @@ KAFKA_BROKER = "kafka-broker:9092"
 
 def consume():
     db_connection = pymysql.connect(
-        host="database:3306",
+        host="database",
+        port="3306",
         user="user",
         password="password",
         db="lieferbot"

@@ -63,18 +63,30 @@ def compute_report(context, order_update: OrderUpdate):
     report.vehicle = order_update.vehicle
 
     time_unassigned = context.state('time_unassigned').unpack(Time)
+    if not time_unassigned:
+        time_unassigned = Time()
+        time_unassigned.time
     report.timeUnassigned = time_unassigned.time
     context.state('time_unassigned').pack(time_unassigned)
 
     time_assigned = context.state('time_assigned').unpack(Time)
+    if not time_assigned:
+        time_assigned = Time()
+        time_assigned.time
     report.timeAssigned = time_assigned.time
     context.state('time_assigned').pack(time_assigned)
 
     time_progress = context.state('time_in_progress').unpack(Time)
+    if not time_progress:
+        time_progress = Time()
+        time_progress.time
     report.timeInProgress = time_progress.time
     context.state('time_in_progress').pack(time_progress)
 
     time_delivered = context.state('time_delivered').unpack(Time)
+    if not time_delivered:
+        time_delivered = Time()
+        time_delivered.time
     report.timeDelivered = time_delivered.time
     context.state('time_delivered').pack(time_delivered)
 
