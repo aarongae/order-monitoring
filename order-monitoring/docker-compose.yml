@@ -1,10 +1,13 @@
 version: "2.1"
 services:
   zookeeper:
+    container_name: zookeeper
     image: zookeeper
     ports:
       - "2181:2181"
+
   kafka-broker:
+    container_name: kafka-broker
     image: wurstmeister/kafka:2.12-2.0.1
     ports:
       - "9092:9092"
@@ -17,7 +20,9 @@ services:
       - zookeeper
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+
   master:
+    container_name: master
     build:
       context: .
     expose:
@@ -29,7 +34,9 @@ services:
       - MASTER_HOST=master
     volumes:
       - ./checkpoint-dir:/checkpoint-dir
+
   worker:
+    container_name: worker
     build:
       context: .
     expose:
@@ -46,27 +53,33 @@ services:
       - MASTER_HOST=master
     volumes:
       - ./checkpoint-dir:/checkpoint-dir
+
   python-worker:
+    container_name: python-worker
     build:
       context: ./monitoring
     expose:
       - "8000"
+
   order-generator:
+    container_name: order-generator
     build:
       context: generator
       dockerfile: Dockerfile
     depends_on:
       - kafka-broker
+
   results-consumer:
+    container_name: results-consumer
     build:
       context: consumer
       dockerfile: Dockerfile
     depends_on:
       - kafka-broker
       - database
-    links:
-      - database:database
+
   app:
+    container_name: app
     build:
       context: dashboard
       dockerfile: Dockerfile
@@ -74,17 +87,18 @@ services:
       - 8050:8050
     depends_on:
       - database
-    links:
-      - database:database
+
   database:
-    image: mysql
+    container_name: database
+    image: postgres:latest
     restart: always
-    environment:
-      - MYSQL_USER=user
-      - MYSQL_PASSWORD=password
-      - MYSQL_DATABASE=lieferbot
-      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
     ports:
-      - 3306:3306
-    expose:
-      - 3306
+      - 5432:5432
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: lieferbot
+    #    volumes:
+    #      - "./db_volume:/var/lib/postgresql"
