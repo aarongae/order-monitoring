@@ -1,5 +1,4 @@
 from sqlalchemy import create_engine
-import pymysql
 import flask
 import dash
 import dash_table
@@ -28,7 +27,7 @@ app.layout = html.Div(children=[
 @app.callback(Output('table-placeholder', 'children'),
               [Input('interval-component', 'n_intervals')])
 def update_metrics(n):
-    connection_str = 'mysql+pymysql://user:password@database:3306/lieferbot'
+    connection_str = 'postgresql+psycopg2://user:password@database:5432/lieferbot'
     connection = create_engine(connection_str)
     df = pandas.read_sql(
         "select * from reports",

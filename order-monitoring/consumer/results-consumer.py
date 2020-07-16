@@ -6,7 +6,7 @@ import time
 
 from kafka.errors import NoBrokersAvailable
 from kafka import KafkaConsumer
-import pymysql
+import psycopg2
 
 from messages_pb2 import Report
 
@@ -14,18 +14,27 @@ KAFKA_BROKER = "kafka-broker:9092"
 
 
 def consume():
-    db_connection = pymysql.connect(
+    db_connection = psycopg2.connect(
         host="database",
-        port="3306",
+        port="5432",
         user="user",
         password="password",
-        db="lieferbot"
+        database="lieferbot"
     )
+    db_connection.autocommit = True
     db_cursor = db_connection.cursor()
-    query = "CREATE TABLE reports(order VARCHAR(255), vehicle VARCHAR(255), unassigned VARCHAR(255), " \
-            "assigned VARCHAR(255), inprogress VARCHAR(255), delivered VARCHAR(255), throughput VARCHAR(255))"
+    query = """
+    CREATE TABLE IF NOT EXISTS reports (
+        orderid VARCHAR(255), 
+        vehicle VARCHAR(255), 
+        unassigned VARCHAR(255),
+        assigned VARCHAR(255), 
+        inprogress VARCHAR(255), 
+        delivered VARCHAR(255), 
+        throughput VARCHAR(255)
+    )
+    """
     db_cursor.execute(query)
-    db_connection.commit()
     consumer = KafkaConsumer(
         'reports',
         bootstrap_servers=[KAFKA_BROKER],
@@ -46,7 +55,7 @@ def consume():
             flush=True
         )
 
-        query = "INSERT INTO reports (order, vehicle, unassigned, assigned, inprogress, delivered, throughput)" \
+        query = "INSERT INTO reports (orderid, vehicle, unassigned, assigned, inprogress, delivered, throughput)" \
                 "VALUES (%s, %s, %s, %s, %s, %s, %s)"
         db_cursor.execute(query, (response.id, response.vehicle,
                                   str_unassigned, str_assigned, str_inprogress, str_delivered, str_throughput))

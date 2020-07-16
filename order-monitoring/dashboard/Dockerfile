@@ -5,8 +5,9 @@ WORKDIR /app
 
 RUN pip install dash
 RUN pip install sqlalchemy
-RUN pip install pymysql
+RUN pip install psycopg2
 RUN pip install pandas
+RUN pip install cryptography
 
 COPY app.py /app
 

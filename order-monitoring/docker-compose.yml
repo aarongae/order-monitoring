@@ -64,8 +64,6 @@ services:
     depends_on:
       - kafka-broker
       - database
-    links:
-      - database:database
   app:
     build:
       context: dashboard
@@ -74,19 +72,11 @@ services:
       - 8050:8050
     depends_on:
       - database
-    links:
-      - database:database
   database:
-    image: mysql
-    volumes:
-      - ./var/lib/mysql
-    restart: always
+    image: postgres
     environment:
-      - MYSQL_USER=user
-      - MYSQL_PASSWORD=password
-      - MYSQL_DATABASE=lieferbot
-      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=lieferbot
     ports:
-      - 3306:3306
-    expose:
-      - 3306
+      - 5432:5432
