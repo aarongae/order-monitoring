@@ -6,6 +6,7 @@ import time
 
 from kafka.errors import NoBrokersAvailable
 from kafka import KafkaConsumer
+import psycopg2
 
 from messages_pb2 import Report, Overview, TimeoutReport
 
@@ -13,6 +14,27 @@ KAFKA_BROKER = "kafka-broker:9092"
 
 
 def consume():
+    db_connection = psycopg2.connect(
+        host="database",
+        port="5432",
+        user="user",
+        password="password",
+        database="lieferbot"
+    )
+    db_connection.autocommit = True
+    db_cursor = db_connection.cursor()
+    query = """
+        CREATE TABLE IF NOT EXISTS reports (
+            orderid VARCHAR(255), 
+            vehicle VARCHAR(255), 
+            unassigned VARCHAR(255),
+            assigned VARCHAR(255), 
+            inprogress VARCHAR(255), 
+            delivered VARCHAR(255), 
+            throughput VARCHAR(255)
+        )
+        """
+    db_cursor.execute(query)
     consumer = KafkaConsumer(
         'reports',
         bootstrap_servers=[KAFKA_BROKER],
@@ -21,19 +43,43 @@ def consume():
         response = Report()
         response.ParseFromString(message.value)
 
-        print("Order:{} Vehicle:{} UNASSIGNED:{} ASSIGNED:{} IN_PROGRESS:{} DELIVERED:{} ThroughputTime:{}"
-            .format(
-            response.id, response.vehicle,
-            datetime.utcfromtimestamp(response.timeUnassigned).strftime('%Y-%m-%d %H:%M:%S'),
-            datetime.utcfromtimestamp(response.timeAssigned).strftime('%Y-%m-%d %H:%M:%S'),
-            datetime.utcfromtimestamp(response.timeInProgress).strftime('%Y-%m-%d %H:%M:%S'),
-            datetime.utcfromtimestamp(response.timeDelivered).strftime('%Y-%m-%d %H:%M:%S'),
-            str(datetime.utcfromtimestamp(response.timeDelivered) - datetime.utcfromtimestamp(response.timeUnassigned))
-            ),
+        str_unassigned = datetime.utcfromtimestamp(response.timeUnassigned).strftime('%Y-%m-%d %H:%M:%S')
+        str_assigned = datetime.utcfromtimestamp(response.timeAssigned).strftime('%Y-%m-%d %H:%M:%S')
+        str_inprogress = datetime.utcfromtimestamp(response.timeInProgress).strftime('%Y-%m-%d %H:%M:%S')
+        str_delivered = datetime.utcfromtimestamp(response.timeDelivered).strftime('%Y-%m-%d %H:%M:%S')
+        str_throughput = str(datetime.utcfromtimestamp(response.timeDelivered)
+                             - datetime.utcfromtimestamp(response.timeUnassigned))
+
+        print("Order:{} Vehicle:{} UNASSIGNED:{} ASSIGNED:{} IN_PROGRESS:{} DELIVERED:{} ThroughputTime:{}".format(
+            response.id, response.vehicle, str_unassigned, str_assigned, str_inprogress, str_delivered, str_throughput),
             flush=True
         )
 
+        query = "INSERT INTO reports (orderid, vehicle, unassigned, assigned, inprogress, delivered, throughput)" \
+                "VALUES (%s, %s, %s, %s, %s, %s, %s)"
+        db_cursor.execute(query, (response.id, response.vehicle,
+                                  str_unassigned, str_assigned, str_inprogress, str_delivered, str_throughput))
+
+
 def consume_overview():
+    db_connection = psycopg2.connect(
+        host="database",
+        port="5432",
+        user="user",
+        password="password",
+        database="lieferbot"
+    )
+    db_connection.autocommit = True
+    db_cursor = db_connection.cursor()
+    query = """
+        CREATE TABLE IF NOT EXISTS overviews ( 
+            unassigned INTEGER,
+            assigned INTEGER, 
+            inprogress INTEGER, 
+            delivered INTEGER
+        )
+        """
+    db_cursor.execute(query)
     consumer_overview = KafkaConsumer(
         'overviews',
         bootstrap_servers=[KAFKA_BROKER],
@@ -47,8 +93,28 @@ def consume_overview():
             ),
             flush=True
         )
+        query = "INSERT INTO overviews (unassigned, assigned, inprogress, delivered) VALUES (%d, %d, %d, %d)"
+        db_cursor.execute(query, (response.noUnassigned, response.noAssigned,
+                                  response.noInProgress, response.noDelivered))
+
 
 def consume_timeout():
+    db_connection = psycopg2.connect(
+        host="database",
+        port="5432",
+        user="user",
+        password="password",
+        database="lieferbot"
+    )
+    db_connection.autocommit = True
+    db_cursor = db_connection.cursor()
+    query = """
+        CREATE TABLE IF NOT EXISTS timeouts ( 
+            orderid VARCHAR(255),
+            status VARCHAR(255)
+        )
+        """
+    db_cursor.execute(query)
     consumer_timeout = KafkaConsumer(
         'timeouts',
         bootstrap_servers=[KAFKA_BROKER],
@@ -62,6 +128,8 @@ def consume_timeout():
             ),
             flush=True
         )
+        query = "INSERT INTO overviews (orderid, status) VALUES (%s, %s)"
+        db_cursor.execute(query, (response.orderId, response.order.status))
 
 
 def handler(number, frame):
