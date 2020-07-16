@@ -6,11 +6,10 @@ WORKDIR /app
 RUN pip install protobuf
 RUN pip install kafka-python
 
-COPY generator/order-generator.py /app
+COPY consumer/results-consumer.py /app
 COPY protobuf/messages_pb2.py /app
-COPY generator/data /app
 
 
-CMD ["python", "/app/order-generator.py"]
+CMD ["python", "/app/results-consumer.py"]
 
 

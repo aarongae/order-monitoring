@@ -8,6 +8,10 @@
 
 1. Build the flink-statefun and flink docker images (once)
 
+   - Clone StateFun repository
+   - Go into repository
+   - Run `mvn clean package`
+   - Go to 'order-monitoring' directory
    - `cd docker/`
    - Run `build-stateful-functions.sh`
 
@@ -23,8 +27,8 @@ docker-compose up
 
 [Alternatively:
 docker-compose up -d.
-To see what comes out of the topics `status` and `reports`:
-docker-compose logs -f order-generator]
+To see what comes out of the topics `reports`, `overviews` and `timeouts`:
+docker-compose logs -f results-consumer]
 
 # Für Protokolländerungen
 
@@ -39,4 +43,4 @@ protoc messages.proto --python_out=./
 # Kafka-Fehler beheben
 
 Alle Container entfernen:
-docker rm \$(docker ps -aq)
+docker rm $(docker ps -aq)

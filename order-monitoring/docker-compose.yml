@@ -1,7 +1,7 @@
 version: "2.1"
 services:
   zookeeper:
-    image: wurstmeister/zookeeper
+    image: zookeeper
     ports:
       - "2181:2181"
   kafka-broker:
@@ -11,7 +11,7 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       HOSTNAME_COMMAND: "route -n | awk '/UG[ \t]/{print $$2}'"
-      KAFKA_CREATE_TOPICS: "orders:1:1,status:1:1,reports:1:1"
+      KAFKA_CREATE_TOPICS: "orders:1:1,reports:1:1,overviews:1:1,timeouts:1:1"
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
     depends_on:
       - zookeeper
@@ -48,12 +48,17 @@ services:
       - ./checkpoint-dir:/checkpoint-dir
   python-worker:
     build:
-      context: ./monitoring
-    expose:
-      - "8000"
+      context: .
+      dockerfile: monitoring/Dockerfile
   order-generator:
     build:
-      context: generator
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: generator/Dockerfile
+    depends_on:
+      - kafka-broker
+  results-consumer:
+    build:
+      context: .
+      dockerfile: consumer/Dockerfile
     depends_on:
       - kafka-broker

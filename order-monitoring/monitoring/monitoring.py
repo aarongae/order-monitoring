@@ -1,123 +1,229 @@
 from flask import request
 from flask import make_response
 from flask import Flask
-from messages_pb2 import OrderState, OrderUpdate, OrderStatus, Report, Time
+from messages_pb2 import OrderState, OrderUpdate, Report, Time, Overview, NoState, OrderStateWithPrevious, TimeoutReport
 
 from statefun import StatefulFunctions
 from statefun import RequestReplyHandler
 from statefun import kafka_egress_record
-
-from datetime import datetime
-import time
+from datetime import timedelta
+import typing
 
 functions = StatefulFunctions()
 
+
 @functions.bind("lieferbot/monitoring")
-def monitore(context, order_update: OrderUpdate):
-    # Stateful function, represents the orders
+def monitor(context, order_update: OrderUpdate):
+
     state = context.state('order_state').unpack(OrderState)
+    state_with_previous = OrderStateWithPrevious()
+    state_with_previous.status = order_update.status
+
     if not state:
         state = OrderState()
-        state.status = 0
+        state_with_previous.previous = False
     else:
-        state.status += 1
+        state_with_previous.previous = True
+
+    state.status = order_update.status
     context.state('order_state').pack(state)
 
-    if state.status == 0:
-        timeunassigned = context.state('time_unassigned').unpack(Time)
-        if not timeunassigned:
-            t = time.time()
-            timeunassigned = Time()
-            timeunassigned.time = t
-        context.state('time_unassigned').pack(timeunassigned)
-    elif state.status == 1:
-        timeassigned = context.state('time_assigned').unpack(Time)
-        t = time.time()
-        timeassigned = Time()
-        timeassigned.time = t
-        context.state('time_assigned').pack(timeassigned)
+    if state.status == "UNASSIGNED":
+        time_unassigned = context.state('time_unassigned').unpack(Time)
+        if not time_unassigned:
+            time_unassigned = Time()
+        time_unassigned.time = order_update.time
+        context.state('time_unassigned').pack(time_unassigned)
 
-    elif state.status == 2:
-        timeprogress = context.state('time_in_progress').unpack(Time)
-        if not timeprogress:
-            t = time.time()
-            timeprogress = Time()
-            timeprogress.time = t
-        context.state('time_in_progress').pack(timeprogress)
+    elif state.status == "ASSIGNED":
+        time_assigned = context.state('time_assigned').unpack(Time)
+        if not time_assigned:
+            time_assigned = Time()
+        time_assigned.time = order_update.time
+        context.state('time_assigned').pack(time_assigned)
 
-    elif state.status == 3:
-        timedelivered = context.state('time_delivered').unpack(Time)
-        if not timedelivered:
-            t = time.time()
-            timedelivered = Time()
-            timedelivered.time = t
-        context.state('time_delivered').pack(timedelivered)
+    elif state.status == "IN_PROGRESS":
+        time_in_progress = context.state('time_in_progress').unpack(Time)
+        if not time_in_progress:
+            time_in_progress = Time()
+        time_in_progress.time = order_update.time
+        context.state('time_in_progress').pack(time_in_progress)
 
-        report = compute_report(context, order_update, state.status)
+    elif state.status == "DELIVERED":
+        time_delivered = context.state('time_delivered').unpack(Time)
+        if not time_delivered:
+            time_delivered = Time()
+        time_delivered.time = order_update.time
+        context.state('time_delivered').pack(time_delivered)
+
+        report = compute_report(context, order_update)
 
         egress_message = kafka_egress_record(
-            topic="reports",  key=order_update.id, value=report)
+            topic="reports", key=order_update.id, value=report)
         context.pack_and_send_egress("lieferbot/status", egress_message)
 
-    response = compute_status(order_update, state.status)
+    context.pack_and_send("lieferbot/overview", "overview", state_with_previous)
+    context.pack_and_send("lieferbot/timeout_counter", order_update.id, order_update)
+    context.pack_and_send("lieferbot/timeout_check", order_update.id, state)
 
-    egress_message = kafka_egress_record(
-        topic="status", key=order_update.id, value=response)
-    context.pack_and_send_egress("lieferbot/status", egress_message)
 
-    
-def compute_report(context, order_update: OrderUpdate, state):
+def compute_report(context, order_update: OrderUpdate):
     # Compute the final report, after an order has reached the state delivered
     report = Report()
     report.id = order_update.id
     report.vehicle = order_update.vehicle
 
-    timeunassigned = context.state('time_unassigned').unpack(Time)
-    report.timeUnassigned = timeunassigned.time
-    context.state('time_unassigned').pack(timeunassigned)
+    time_unassigned = context.state('time_unassigned').unpack(Time)
+    if not time_unassigned:
+        time_unassigned = Time()
+        time_unassigned.time
+    report.timeUnassigned = time_unassigned.time
+    context.state('time_unassigned').pack(time_unassigned)
 
-    timeassigned = context.state('time_assigned').unpack(Time)
-    report.timeAssigned = timeassigned.time
-    context.state('time_assigned').pack(timeassigned)
+    time_assigned = context.state('time_assigned').unpack(Time)
+    if not time_assigned:
+        time_assigned = Time()
+        time_assigned.time
+    report.timeAssigned = time_assigned.time
+    context.state('time_assigned').pack(time_assigned)
 
-    timeprogress = context.state('time_in_progress').unpack(Time)
-    report.timeInProgress = timeprogress.time
-    context.state('time_in_progress').pack(timeprogress)
+    time_progress = context.state('time_in_progress').unpack(Time)
+    if not time_progress:
+        time_progress = Time()
+        time_progress.time
+    report.timeInProgress = time_progress.time
+    context.state('time_in_progress').pack(time_progress)
 
-    timedelivered = context.state('time_delivered').unpack(Time)
-    report.timeDelivered = timedelivered.time
-    context.state('time_delivered').pack(timedelivered)
-
-    report.test = str(report.timeDelivered - report.timeUnassigned)
+    time_delivered = context.state('time_delivered').unpack(Time)
+    if not time_delivered:
+        time_delivered = Time()
+        time_delivered.time
+    report.timeDelivered = time_delivered.time
+    context.state('time_delivered').pack(time_delivered)
 
     return report
-        
 
-def compute_status(order_update:OrderUpdate, state):
-    # Compute the status update, after an order has reached a new status
-    now = datetime.now()
 
-    if state == 0:
-        status = "Order:%s Status:UNASSIGNED Time:%s VehicleId:%s" % (
-            order_update.id, now.strftime("%d.%m.%Y - %H:%M:%S"), order_update.vehicle)
-    elif state == 1:
-        status = "Order:%s Status:ASSIGNED Time:%s VehicleId:%s" % (
-            order_update.id, now.strftime("%d.%m.%Y - %H:%M:%S"), order_update.vehicle)
-    elif state == 2:
-        status = "Order:%s Status:IN_PROGRESS Time:%s VehicleId:%s" % (
-            order_update.id, now.strftime("%d.%m.%Y - %H:%M:%S"), order_update.vehicle)
-    elif state == 3:
-        status = "Order:%s Status:DELIVERED Time:%s VehicleId:%s" % (
-            order_update.id, now.strftime("%d.%m.%Y - %H:%M:%S"), order_update.vehicle)
+@functions.bind("lieferbot/overview")
+def overview(context, state: OrderStateWithPrevious):
+
+    if state.status == "UNASSIGNED":
+        no_unassigned = context.state('no_unassigned').unpack(NoState)
+        if not no_unassigned:
+            no_unassigned = NoState()
+            no_unassigned.counter = 1
+        else:
+            no_unassigned.counter += 1
+        context.state('no_unassigned').pack(no_unassigned)
+
+    elif state.status == "ASSIGNED":
+        no_unassigned = context.state('no_unassigned').unpack(NoState)
+        if no_unassigned and state.previous:
+            no_unassigned.counter -= 1
+            context.state('no_unassigned').pack(no_unassigned)
+
+        no_assigned = context.state('no_assigned').unpack(NoState)
+        if not no_assigned:
+            no_assigned = NoState()
+            no_assigned.counter = 1
+        else:
+            no_assigned.counter += 1
+        context.state('no_assigned').pack(no_assigned)
+
+    elif state.status == "IN_PROGRESS":
+        no_assigned = context.state('no_assigned').unpack(NoState)
+        if no_assigned and state.previous:
+            no_assigned.counter -= 1
+            context.state('no_assigned').pack(no_assigned)
+
+        no_in_progress = context.state('no_in_progress').unpack(NoState)
+        if not no_in_progress:
+            no_in_progress = NoState()
+            no_in_progress.counter = 1
+        else:
+            no_in_progress.counter += 1
+        context.state('no_in_progress').pack(no_in_progress)
+
+    elif state.status == "DELIVERED":
+        no_in_progress = context.state('no_in_progress').unpack(NoState)
+        if no_in_progress and state.previous:
+            no_in_progress.counter -= 1
+            context.state('no_in_progress').pack(no_in_progress)
+
+        no_delivered = context.state('no_delivered').unpack(NoState)
+        if not no_delivered:
+            no_delivered = NoState()
+            no_delivered.counter = 1
+        else:
+            no_delivered.counter += 1
+        context.state('no_delivered').pack(no_delivered)
+
+    overview = compute_overview(context)
+
+    egress_message = kafka_egress_record(
+        topic="overviews", key="overview", value=overview)
+    context.pack_and_send_egress("lieferbot/status", egress_message)
+
+
+def compute_overview(context):
+    # Compute the final report, after an order has reached the state delivered
+    overview = Overview()
+
+    no_unassigned = context.state('no_unassigned').unpack(NoState)
+    if no_unassigned:
+        overview.noUnassigned = no_unassigned.counter
     else:
-        status = "Order:%s Status:UNKNOWN Time:%s VehicleId:%s" % (
-            order_update.id, now.strftime("%d.%m.%Y - %H:%M:%S"), order_update.vehicle)
+        overview.noUnassigned = 0
 
-    response = OrderStatus()
-    response.id = order_update.id
-    response.status = status
+    no_assigned = context.state('no_assigned').unpack(NoState)
+    if no_assigned:
+        overview.noAssigned = no_assigned.counter
+    else:
+        overview.noAssigned = 0
 
-    return response
+    no_in_progress = context.state('no_in_progress').unpack(NoState)
+    if no_in_progress:
+        overview.noInProgress = no_in_progress.counter
+    else:
+        overview.noInProgress = 0
+
+    no_delivered = context.state('no_delivered').unpack(NoState)
+    if no_delivered:
+        overview.noDelivered = no_delivered.counter
+    else:
+        overview.noDelivered = 0
+
+    return overview
+
+
+@functions.bind("lieferbot/timeout_counter")
+def timeout(context, order_update: OrderUpdate):
+
+    if(order_update.status!="DELIVERED"):
+        delay = timedelta(seconds=30)
+        context.pack_and_send_after(delay, "lieferbot/timeout_check", order_update.id, order_update)
+
+
+@functions.bind("lieferbot/timeout_check")
+def timeout(context, request: typing.Union[OrderState, OrderUpdate]):
+
+    if isinstance(request, OrderState):
+        state = context.state('order_state').unpack(OrderState)
+        if not state:
+            state = OrderState()
+        state.status = request.status
+        context.state('order_state').pack(state)
+
+    elif isinstance(request, OrderUpdate):
+        state = context.state('order_state').unpack(OrderState)
+        if (state.status == request.status):
+            report = TimeoutReport()
+            report.order.status = state.status
+            report.orderId = request.id
+
+            egress_message = kafka_egress_record(
+                topic="timeouts", key=request.id, value=report)
+            context.pack_and_send_egress("lieferbot/status", egress_message)
 
 
 handler = RequestReplyHandler(functions)
@@ -135,6 +241,7 @@ def handle():
     response = make_response(response_data)
     response.headers.set('Content-Type', 'application/octet-stream')
     return response
+
 
 if __name__ == "__main__":
     app.run()

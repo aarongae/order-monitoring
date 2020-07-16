@@ -9,28 +9,21 @@ message OrderUpdate {
     // The id of the order
     string id = 1;
     // The vehicle id of the order
-    int64 vehicle = 2;
-}
-
-// A customized status update of an order
-message OrderStatus {
-    // The id of the order
-    string id = 1;
-    // The orders status update
-    string status = 2;
+    string vehicle = 2;
+    // The current status of the order
+    string status = 3;
+    // The time the update was made
+    float time = 4;
 }
 
 // An internal message used to store state of the order
 message OrderState {
     // The current state of the order
-    StatusType status = 1;
-    // The possible states
-    enum StatusType{
-        UNASSIGNED = 0;
-        ASSIGNED = 1;
-        INPROGRESS = 2;
-        DELIVERED =3;
-    }
+    string status = 1;
+}
+message OrderStateWithPrevious {
+    string status = 1;
+    bool previous = 2;
 }
 
 // An internal message used to store timestamps
@@ -38,13 +31,28 @@ message Time {
     float time = 1;
 }
 
+message NoState {
+    int64 counter = 1;
+}
+
 // A customized monitoring report of an order
 message Report {
     string id = 1;
-    int64 vehicle = 2;
+    string vehicle = 2;
     float timeUnassigned = 3;
     float timeAssigned = 4;
     float timeInProgress = 5;
     float timeDelivered = 6;
-    string test = 7;
+}
+
+message Overview {
+    int64 noUnassigned = 1;
+    int64 noAssigned = 2;
+    int64 noInProgress = 3;
+    int64 noDelivered = 4;
+}
+
+message TimeoutReport {
+    OrderState order = 1;
+    string orderId = 2;
 }
