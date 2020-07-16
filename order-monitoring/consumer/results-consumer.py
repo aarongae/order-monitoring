@@ -14,17 +14,23 @@ KAFKA_BROKER = "kafka-broker:9092"
 
 
 def consume():
-    db_connection = psycopg2.connect(
-        host="database",
-        port="5432",
-        user="user",
-        password="password",
-        database="lieferbot"
-    )
+    while True:
+        try:
+            db_connection = psycopg2.connect(
+                host="database",
+                port="5432",
+                user="user",
+                password="password",
+                database="lieferbot"
+            )
+            break
+        except Exception:
+            print("Can't connect")
     db_connection.autocommit = True
     db_cursor = db_connection.cursor()
+    db_cursor.execute("DROP TABLE IF EXISTS reports")
     query = """
-        CREATE TABLE IF NOT EXISTS reports (
+        CREATE TABLE reports (
             orderid VARCHAR(255), 
             vehicle VARCHAR(255), 
             unassigned VARCHAR(255),
@@ -38,7 +44,7 @@ def consume():
     consumer = KafkaConsumer(
         'reports',
         bootstrap_servers=[KAFKA_BROKER],
-        auto_offset_reset='earliest')
+        auto_offset_reset='latest')
     for message in consumer:
         response = Report()
         response.ParseFromString(message.value)
@@ -62,17 +68,23 @@ def consume():
 
 
 def consume_overview():
-    db_connection = psycopg2.connect(
-        host="database",
-        port="5432",
-        user="user",
-        password="password",
-        database="lieferbot"
-    )
+    while True:
+        try:
+            db_connection = psycopg2.connect(
+                host="database",
+                port="5432",
+                user="user",
+                password="password",
+                database="lieferbot"
+            )
+            break
+        except Exception:
+            print("Can't connect")
     db_connection.autocommit = True
     db_cursor = db_connection.cursor()
+    db_cursor.execute("DROP TABLE IF EXISTS overviews")
     query = """
-        CREATE TABLE IF NOT EXISTS overviews ( 
+        CREATE TABLE overviews ( 
             unassigned INTEGER,
             assigned INTEGER, 
             inprogress INTEGER, 
@@ -83,7 +95,7 @@ def consume_overview():
     consumer_overview = KafkaConsumer(
         'overviews',
         bootstrap_servers=[KAFKA_BROKER],
-        auto_offset_reset='earliest')
+        auto_offset_reset='latest')
     for message in consumer_overview:
         response = Overview()
         response.ParseFromString(message.value)
@@ -93,23 +105,29 @@ def consume_overview():
             ),
             flush=True
         )
-        query = "INSERT INTO overviews (unassigned, assigned, inprogress, delivered) VALUES (%d, %d, %d, %d)"
-        db_cursor.execute(query, (response.noUnassigned, response.noAssigned,
-                                  response.noInProgress, response.noDelivered))
+        query = "INSERT INTO overviews (unassigned, assigned, inprogress, delivered) VALUES ({}, {}, {}, {})".format(
+            response.noUnassigned, response.noAssigned, response.noInProgress, response.noDelivered)
+        db_cursor.execute(query)
 
 
 def consume_timeout():
-    db_connection = psycopg2.connect(
-        host="database",
-        port="5432",
-        user="user",
-        password="password",
-        database="lieferbot"
-    )
+    while True:
+        try:
+            db_connection = psycopg2.connect(
+                host="database",
+                port="5432",
+                user="user",
+                password="password",
+                database="lieferbot"
+            )
+            break
+        except Exception:
+            print("Can't connect")
     db_connection.autocommit = True
     db_cursor = db_connection.cursor()
+    db_cursor.execute("DROP TABLE IF EXISTS timeouts")
     query = """
-        CREATE TABLE IF NOT EXISTS timeouts ( 
+        CREATE TABLE timeouts ( 
             orderid VARCHAR(255),
             status VARCHAR(255)
         )
@@ -118,7 +136,7 @@ def consume_timeout():
     consumer_timeout = KafkaConsumer(
         'timeouts',
         bootstrap_servers=[KAFKA_BROKER],
-        auto_offset_reset='earliest')
+        auto_offset_reset='latest')
     for message in consumer_timeout:
         response = TimeoutReport()
         response.ParseFromString(message.value)
@@ -128,7 +146,7 @@ def consume_timeout():
             ),
             flush=True
         )
-        query = "INSERT INTO overviews (orderid, status) VALUES (%s, %s)"
+        query = "INSERT INTO timeouts (orderid, status) VALUES (%s, %s)"
         db_cursor.execute(query, (response.orderId, response.order.status))
 
 
@@ -164,7 +182,7 @@ def main():
 
     consumer.join()
     consumer_overview.join()
-    consumer_timeout.start()
+    consumer_timeout.join()
 
 
 if __name__ == "__main__":
