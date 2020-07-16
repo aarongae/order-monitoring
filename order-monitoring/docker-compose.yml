@@ -62,3 +62,20 @@ services:
       dockerfile: consumer/Dockerfile
     depends_on:
       - kafka-broker
+      - database
+  app:
+    build:
+      context: dashboard
+      dockerfile: Dockerfile
+    ports:
+      - 8050:8050
+    depends_on:
+      - database
+  database:
+    image: postgres
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=lieferbot
+    ports:
+      - 5432:5432
