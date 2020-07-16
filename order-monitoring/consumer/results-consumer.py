@@ -59,7 +59,6 @@ def consume():
                 "VALUES (%s, %s, %s, %s, %s, %s, %s)"
         db_cursor.execute(query, (response.id, response.vehicle,
                                   str_unassigned, str_assigned, str_inprogress, str_delivered, str_throughput))
-        db_connection.commit()
 
 
 def handler(number, frame):
